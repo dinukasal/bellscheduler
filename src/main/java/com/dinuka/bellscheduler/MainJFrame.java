@@ -31,6 +31,9 @@ import javax.swing.event.ChangeEvent;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -120,7 +123,7 @@ public class MainJFrame extends javax.swing.JFrame {
                     timeObjects.set(id, (Date) spinner.getValue());
                 }
             });
-//            spinners.get(i).setEditor(new JSpinner.DateEditor(spinners.get(i), "HH:mm:ss"));
+            spinners.get(i).setEditor(new JSpinner.DateEditor(spinners.get(i), "HH:mm:ss"));
         }
     }
 
@@ -1252,8 +1255,20 @@ public class MainJFrame extends javax.swing.JFrame {
     }
 
     private void scheduleAllTasks() {
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
         for (PlaybackTask task : tasks) {
-            timer.schedule(task, task.getPlaybackTime());
+//            timer.schedule(task, task.getPlaybackTime());
+            // Get the current time and calculate the delay until the specified time
+//        long delay = getDelayUntilNextExecutionHour(task.getPlaybackTime(), executionMinute);
+            Date date1 = new Date(); // Current date and time
+            long delay = task.getPlaybackTime().getTime() - date1.getTime();
+            scheduler.scheduleAtFixedRate(
+                    task,
+                    delay,
+                    24 * 60 * 60 * 1000, // Repeat every 24 hours (one day)
+                    TimeUnit.MILLISECONDS
+            );
         }
         Map<String, Date> map = new HashMap<>();
 //        map.put("key1", "value1");
