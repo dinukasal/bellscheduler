@@ -16,6 +16,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,6 +28,9 @@ import java.util.TimerTask;
 import javazoom.jl.player.Player;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -42,7 +49,11 @@ public class MainJFrame extends javax.swing.JFrame {
     private List<String> files;
     private List<JSpinner> spinners;
     private List<Date> timeObjects;
-    int spinnerId;
+    private List<JButton> fileSelectorBtns;
+    private List<JTextField> fileNameFields;
+
+    // Define the file name
+    String fileName = "schedule.ser";
 
     /**
      * Creates new form NewJFrame
@@ -53,8 +64,8 @@ public class MainJFrame extends javax.swing.JFrame {
         files = new ArrayList<>();
         spinners = new ArrayList<>();
         timeObjects = new ArrayList<>();
-        
-        spinnerId = 0;
+        fileSelectorBtns = new ArrayList<>();
+        fileNameFields = new ArrayList<>();
 
         initComponents();
 
@@ -62,6 +73,27 @@ public class MainJFrame extends javax.swing.JFrame {
             timeObjects.add(new Date());
         }
 
+        initSpinners();
+        initButtons();
+
+        // Load the map from the file
+        try {
+            Map<String, Date> loadedMap = loadMapFromFile(fileName);
+            System.out.println("Map loaded from file: " + loadedMap);
+            int id = 0;
+            for (Map.Entry<String, Date> item : loadedMap.entrySet()) {
+                PlaybackTask task = new PlaybackTask(item.getKey(), item.getValue());
+                tasks.add(task);
+                fileNameFields.get(id).setText(item.getKey());
+                spinners.get(id).setValue(item.getValue());
+                id++;
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void initSpinners() {
         spinners.add(jSpinner1);
         spinners.add(jSpinner2);
         spinners.add(jSpinner3);
@@ -76,18 +108,94 @@ public class MainJFrame extends javax.swing.JFrame {
         spinners.add(jSpinner12);
 
         // Add a ChangeListener to the JSpinner
-        for (JSpinner spinner : spinners) {
-            spinner.addChangeListener(new ChangeListener() {
+        for (int i = 0; i < 12; i++) {
+            int id = i;
+            System.out.println(id);
+            spinners.get(i).addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
+                    JSpinner spinner = (JSpinner) e.getSource();
+                    System.out.println("changing spinner " + id);
                     // Perform desired action when spinner value changes, such as cancelling a task
-                    timeObjects.set(spinnerId, (Date) spinners.get(spinnerId).getValue());
+                    timeObjects.set(id, (Date) spinner.getValue());
                 }
             });
-            spinnerId++;
-            spinner.setEditor(new JSpinner.DateEditor(jSpinner1, "HH:mm:ss"));
+//            spinners.get(i).setEditor(new JSpinner.DateEditor(spinners.get(i), "HH:mm:ss"));
         }
+    }
 
+    public void initButtons() {
+        fileSelectorBtns.add(jButton1);
+        fileSelectorBtns.add(jButton2);
+        fileSelectorBtns.add(jButton11);
+        fileSelectorBtns.add(jButton13);
+        fileSelectorBtns.add(jButton16);
+        fileSelectorBtns.add(jButton19);
+        fileSelectorBtns.add(jButton22);
+        fileSelectorBtns.add(jButton30);
+        fileSelectorBtns.add(jButton33);
+        fileSelectorBtns.add(jButton36);
+        fileSelectorBtns.add(jButton39);
+        fileSelectorBtns.add(jButton42);
+
+        fileNameFields.add(jTextField1);
+        fileNameFields.add(jTextField2);
+        fileNameFields.add(jTextField3);
+        fileNameFields.add(jTextField4);
+        fileNameFields.add(jTextField5);
+        fileNameFields.add(jTextField6);
+        fileNameFields.add(jTextField7);
+        fileNameFields.add(jTextField8);
+        fileNameFields.add(jTextField9);
+        fileNameFields.add(jTextField10);
+        fileNameFields.add(jTextField11);
+        fileNameFields.add(jTextField12);
+
+        for (int i = 0; i < 12; i++) {
+            int id = i;
+            fileSelectorBtns.get(i).addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    System.out.println(id + "button clicked");
+                    // Create a file chooser
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setDialogTitle("Select a file");
+
+                    // Show the file chooser dialog
+                    int result = fileChooser.showOpenDialog(MainJFrame.this);
+
+                    // If the user selects a file
+                    if (result == JFileChooser.APPROVE_OPTION) {
+                        File selectedFile = fileChooser.getSelectedFile();
+                        // Perform an action with the selected file (e.g., print the file path)
+                        fileNameFields.get(id).setText(selectedFile.getAbsolutePath());
+                        filename = selectedFile.getAbsolutePath();
+                        if (files.size() > 0) {
+                            files.set(id, filename);
+                        } else {
+                            files.add(selectedFile.getAbsolutePath());
+
+                        }
+                    }
+                }
+            });
+
+        }
+    }
+
+    // Method to save a map to a file
+    public static void saveMapToFile(Map<String, Date> map, String fileName) throws IOException {
+        try (FileOutputStream fileOut = new FileOutputStream(fileName); ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
+            out.writeObject(map);
+        }
+    }
+
+    // Method to load a map from a file
+    @SuppressWarnings("unchecked")
+    public static Map<String, Date> loadMapFromFile(String fileName) throws IOException, ClassNotFoundException {
+        try (FileInputStream fileIn = new FileInputStream(fileName); ObjectInputStream in = new ObjectInputStream(fileIn)) {
+            return (Map<String, Date>) in.readObject();
+        }
     }
 
     /**
@@ -213,7 +321,7 @@ public class MainJFrame extends javax.swing.JFrame {
 
         jLabel1.setText("Bell 1");
 
-        jSpinner1.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner1.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jTextField2.setText("select audio file...");
         jTextField2.addActionListener(new java.awt.event.ActionListener() {
@@ -231,7 +339,7 @@ public class MainJFrame extends javax.swing.JFrame {
 
         jLabel2.setText("Bell 2");
 
-        jSpinner2.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner2.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jButton3.setText("Play Bell");
         jButton3.addActionListener(new java.awt.event.ActionListener() {
@@ -309,7 +417,7 @@ public class MainJFrame extends javax.swing.JFrame {
 
         jLabel3.setText("Bell 3");
 
-        jSpinner3.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner3.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jButton12.setText("Stop Bell");
         jButton12.addActionListener(new java.awt.event.ActionListener() {
@@ -318,7 +426,7 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jSpinner4.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner4.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jLabel4.setText("Bell 4");
 
@@ -343,7 +451,7 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jSpinner5.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner5.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jLabel5.setText("Bell 5");
 
@@ -361,7 +469,7 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jSpinner6.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner6.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jLabel6.setText("Bell 6");
 
@@ -379,7 +487,7 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jSpinner7.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner7.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jLabel7.setText("Bell 7");
 
@@ -439,7 +547,7 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jSpinner8.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner8.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jLabel8.setText("Bell 8");
 
@@ -471,7 +579,7 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jSpinner9.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner9.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jLabel9.setText("Bell 9");
 
@@ -503,7 +611,7 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jSpinner10.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner10.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jLabel10.setText("Bell 10");
 
@@ -535,7 +643,7 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jSpinner11.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner11.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jLabel11.setText("Bell 11");
 
@@ -567,7 +675,7 @@ public class MainJFrame extends javax.swing.JFrame {
             }
         });
 
-        jSpinner12.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.HOUR_OF_DAY));
+        jSpinner12.setModel(new javax.swing.SpinnerDateModel(new java.util.Date(), null, null, java.util.Calendar.MINUTE));
 
         jLabel12.setText("Bell 12");
 
@@ -892,21 +1000,6 @@ public class MainJFrame extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-        // Create a file chooser
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Select a file");
-
-        // Show the file chooser dialog
-        int result = fileChooser.showOpenDialog(this);
-
-        // If the user selects a file
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            // Perform an action with the selected file (e.g., print the file path)
-            jTextField1.setText(selectedFile.getAbsolutePath());
-            filename = selectedFile.getAbsolutePath();
-            files.add(selectedFile.getAbsolutePath());
-        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -932,10 +1025,12 @@ public class MainJFrame extends javax.swing.JFrame {
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         // TODO add your handling code here:
-        System.out.println(jSpinner1.getValue().toString());
         cancelAllTasks(false);
         for (int i = 0; i < files.size(); i++) {
-            addTask(files.get(i), (Date) jSpinner1.getValue());
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
+            String formattedTime = timeFormat.format((Date) spinners.get(i).getValue());
+            System.out.println(spinners.get(i).getValue().toString());
+            addTask(files.get(i), formattedTime);
         }
         scheduleAllTasks();
     }//GEN-LAST:event_jButton5ActionPerformed
@@ -1120,14 +1215,14 @@ public class MainJFrame extends javax.swing.JFrame {
         }
     }
 
-    private void addTask(String filename, Date time) {
+    private void addTask(String filename, String timeString) {
         String mp3Path = filename;
 //        String timeString = time;
-//        Date playbackTime = parseTime(timeString);
-        Date playbackTime = time;
+        Date playbackTime = parseTime(timeString);
+//        Date playbackTime = time;
         if (playbackTime != null) {
             tasks.add(new PlaybackTask(mp3Path, playbackTime));
-            scheduledTasksArea.append("Scheduled: " + mp3Path + " at " + time.toString() + "\n");
+            scheduledTasksArea.append("Scheduled: " + mp3Path + " at " + timeString + "\n");
 //            mp3PathField.setText("");
 //            timeField.setText("");
         } else {
@@ -1160,6 +1255,21 @@ public class MainJFrame extends javax.swing.JFrame {
         for (PlaybackTask task : tasks) {
             timer.schedule(task, task.getPlaybackTime());
         }
+        Map<String, Date> map = new HashMap<>();
+//        map.put("key1", "value1");
+
+        for (PlaybackTask task : tasks) {
+            map.put(task.getFilePath(), task.getPlaybackTime());
+        }
+
+        // Save the map to a file
+        try {
+            saveMapToFile(map, fileName);
+            System.out.println("Map saved to file: " + fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void cancelTask(PlaybackTask task) {
@@ -1170,6 +1280,7 @@ public class MainJFrame extends javax.swing.JFrame {
 
     private void cancelAllTasks(boolean showMsg) {
         for (PlaybackTask task : tasks) {
+            task.stopPlayback();
             task.cancel();
         }
         tasks.clear();
