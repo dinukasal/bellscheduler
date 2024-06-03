@@ -29,8 +29,10 @@ import javazoom.jl.player.Player;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  *
@@ -82,12 +84,13 @@ public class MainJFrame extends javax.swing.JFrame {
             System.out.println("Map loaded from file: " + loadedMap);
             int id = 0;
             for (Map.Entry<String, Date> item : loadedMap.entrySet()) {
-                PlaybackTask task = new PlaybackTask(item.getKey(), item.getValue());
+                PlaybackTask task = new PlaybackTask(item.getKey(), resetDateToTodayWithoutTime(item.getValue()));
                 tasks.add(task);
                 fileNameFields.get(id).setText(item.getKey());
                 spinners.get(id).setValue(item.getValue());
                 id++;
             }
+            scheduleAllTasks();
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -181,6 +184,53 @@ public class MainJFrame extends javax.swing.JFrame {
             });
 
         }
+    }
+
+    // Method to reset the date to today without changing the time
+    public static Date resetDateToTodayWithoutTime(Date date) {
+        // Get today's date without time
+        Date todayWithoutTime = getTodayWithoutTime();
+
+        // Get the time from the original date
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Colombo"));
+        calendar.setTime(date);
+
+        // Set the date part from today's date
+        calendar.set(Calendar.YEAR, getYear(todayWithoutTime));
+        calendar.set(Calendar.MONTH, getMonth(todayWithoutTime));
+        calendar.set(Calendar.DAY_OF_MONTH, getDayOfMonth(todayWithoutTime));
+
+        // Return the updated date
+        return calendar.getTime();
+    }
+
+    // Method to get today's date without time
+    public static Date getTodayWithoutTime() {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Colombo"));
+        calendar.set(Calendar.HOUR_OF_DAY, 0); // Hour
+        calendar.set(Calendar.MINUTE, 0);      // Minute
+        calendar.set(Calendar.SECOND, 0);      // Second
+        calendar.set(Calendar.MILLISECOND, 0); // Millisecond
+        return calendar.getTime();
+    }
+
+    // Helper methods to get year, month, and day of month from a Date object
+    public static int getYear(Date date) {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Colombo"));
+        calendar.setTime(date);
+        return calendar.get(Calendar.YEAR);
+    }
+
+    public static int getMonth(Date date) {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Colombo"));
+        calendar.setTime(date);
+        return calendar.get(Calendar.MONTH);
+    }
+
+    public static int getDayOfMonth(Date date) {
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Colombo"));
+        calendar.setTime(date);
+        return calendar.get(Calendar.DAY_OF_MONTH);
     }
 
     // Method to save a map to a file
