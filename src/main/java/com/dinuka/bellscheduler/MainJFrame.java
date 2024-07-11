@@ -78,7 +78,7 @@ public class MainJFrame extends javax.swing.JFrame {
         initSpinners();
         initButtons();
 
-        // Load the map from the file
+        // Loading the map from the file
         try {
             Map<String, Date> loadedMap = loadMapFromFile(fileName);
             System.out.println("Map loaded from file: " + loadedMap);
@@ -86,6 +86,7 @@ public class MainJFrame extends javax.swing.JFrame {
             for (Map.Entry<String, Date> item : loadedMap.entrySet()) {
                 PlaybackTask task = new PlaybackTask(item.getKey(), resetDateToTodayWithoutTime(item.getValue()));
                 tasks.add(task);
+                modifyList(files, id, item.getKey());
                 fileNameFields.get(id).setText(item.getKey());
                 spinners.get(id).setValue(item.getValue());
                 id++;
@@ -159,7 +160,7 @@ public class MainJFrame extends javax.swing.JFrame {
             fileSelectorBtns.get(i).addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    System.out.println(id + "button clicked");
+                    System.out.println(id + "th button clicked");
                     // Create a file chooser
                     JFileChooser fileChooser = new JFileChooser();
                     fileChooser.setDialogTitle("Select a file");
@@ -173,16 +174,38 @@ public class MainJFrame extends javax.swing.JFrame {
                         // Perform an action with the selected file (e.g., print the file path)
                         fileNameFields.get(id).setText(selectedFile.getAbsolutePath());
                         filename = selectedFile.getAbsolutePath();
-                        if (files.size() > 0) {
-                            files.set(id, filename);
-                        } else {
-                            files.add(selectedFile.getAbsolutePath());
 
-                        }
+                        // adding files as below to manage files array when you add files not in order
+//                        if (files.size() >= id && id != 0) {
+//                            files.set(id, filename);
+//                        } else {
+//                            files.add(selectedFile.getAbsolutePath());
+//                        }
+                        modifyList(files, id, filename);
+                        System.out.println(id + " " + filename);
                     }
                 }
             });
 
+        }
+    }
+
+    public static void modifyList(List<String> list, int n, String newItem) {
+
+        int index = n; // Convert to zero-based index
+//        if (n > 0) {
+//            index = n - 1;
+//        }
+
+        // If the list has enough elements, update the nth element
+        if (list.size() > index) {
+            list.set(index, newItem);
+        } else {
+            // If the list doesn't have enough elements, add elements up to n
+            for (int i = list.size(); i < index; i++) {
+                list.add(""); // Add empty strings or placeholders
+            }
+            list.add(newItem); // Add the new item
         }
     }
 
@@ -1075,11 +1098,11 @@ public class MainJFrame extends javax.swing.JFrame {
 
     private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
         // TODO add your handling code here:
-        cancelAllTasks(false);
+        cancelAllTasks(true);
         for (int i = 0; i < files.size(); i++) {
             SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
             String formattedTime = timeFormat.format((Date) spinners.get(i).getValue());
-            System.out.println(spinners.get(i).getValue().toString());
+            System.out.println("scheduling " + i + "th file " + files.get(i) + " " + spinners.get(i).getValue().toString());
             addTask(files.get(i), formattedTime);
         }
         scheduleAllTasks();
